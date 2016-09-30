@@ -7,6 +7,7 @@
 #include <memory>
 #include <sstream>
 #include <random>
+#include <unordered_map>
 
 const size_t NMAX = 6;
 
@@ -24,8 +25,12 @@ public:
   std::bitset<NMAX> code;
   std::list<VrxAdj> adjs;
   size_t code_bits;
+  std::unordered_map<std::bitset<NMAX>, size_t> sp1;
+  std::vector<std::bitset<NMAX> > sp2;
   Vertex(const std::bitset<NMAX>& _code, size_t _code_bits) :
     code(_code), code_bits(_code_bits) {}
+  void PrepareSheres(size_t no_one_value);
+
   void AppendAdj(const VrxAdj& ca) {
     auto iter = adjs.begin();
     for (; iter != adjs.end() && ca.dst > iter->dst; iter++);
@@ -41,7 +46,7 @@ public:
   std::string string_w_adjs() {
     std::string s2r = (std::string)(*this);
     s2r += " {";
-    for(auto p : adjs) {
+    for(const auto& p : adjs) {
       std::stringstream ss;
       ss << p.dst;
       s2r += (std::string)(*p.vrx) + "(" + ss.str() + ") ";
@@ -49,6 +54,19 @@ public:
     s2r += "}";
     return s2r;
   }
+  std::string string_w_sp1() {
+    std::string s2r = (std::string)(*this);
+    s2r += " {";
+    for(const auto& p : sp1) {
+      std::stringstream ss;
+      ss << p.first << ":" << p.second;
+      s2r += ss.str() + " ";
+    }
+    s2r += "}";
+    return s2r;
+  }
 };
 
 std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bits);
+
+void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code);

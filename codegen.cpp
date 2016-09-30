@@ -1,12 +1,3 @@
-#include <iostream>
-#include <vector>
-#include <list>
-#include <random>
-#include <algorithm>
-#include <bitset>
-#include <memory>
-#include <sstream>
-#include <random>
 #include "codegen.h"
 
 size_t ham_dist(const std::bitset<NMAX>& l, const std::bitset<NMAX>& r) {
@@ -98,4 +89,45 @@ std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bit
   }
 
   return gcode;
+}
+
+void Vertex::PrepareSheres(size_t no_one_value) {
+  for (size_t idx1 = 0; idx1 < this->code_bits; idx1++) {
+    this->sp1[this->code ^ std::bitset<NMAX>(1 << idx1)] = no_one_value;
+    for (size_t idx2 = idx1 + 1; idx2 < this->code_bits; idx2++) {
+      this->sp2.emplace_back(this->code ^ std::bitset<NMAX>((1 << idx1) | (1 << idx2)));
+    }
+  }
+}
+
+void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code) {
+  // Initialize spheres.
+  size_t no_one = code.size() + 1;
+  size_t more_than_one = code.size();
+  for (auto iter1 = code.begin(); iter1 != code.end(); iter1++) {
+    (*iter1)->PrepareSheres(no_one);
+  }
+  // Find intersections.
+  for (auto iter1 = code.begin(); iter1 != code.end(); iter1++) { // sp 1
+    size_t idx2 = 0;
+    for (auto iter2 = code.begin(); iter2 != code.end(); iter2++, idx2++) { // sp 2
+      if (iter1 != iter2) {
+        auto val1 = *iter1;
+        auto val2 = *iter2;
+        std::string s1 = (std::string)(*val1);
+        std::string s2 = (std::string)(*val2);
+        // cycle over all sp1
+        for (auto& ps1: val1->sp1) {
+          if (ps1.second != more_than_one &&
+              std::find(val2->sp2.begin(), val2->sp2.end(),  ps1.first) != val2->sp2.end()) {
+            if (ps1.second == no_one) {
+              ps1.second = idx2;
+            } else {
+              ps1.second = more_than_one;
+            }
+          }
+        }
+      }
+    }
+  }
 }

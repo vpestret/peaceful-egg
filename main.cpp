@@ -18,6 +18,14 @@ int main(int argc, char* argv[]) {
   }
   std::cout << std::endl;
 
+  intersect_code_spheres(gcode);
+
+  std::cout << "Close spheres : ";
+  for (auto vrx : gcode) {
+    std::cout << vrx->string_w_sp1() << " ";
+  }
+  std::cout << std::endl;
+
   std::getchar();
 
   return 0;
