@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[]) {
 
-  std::vector<std::shared_ptr<Vertex> > gcode = generate_code(0);
+  std::vector<std::shared_ptr<Vertex> > gcode = generate_code(0, 6);
 
   std::cout << "Generated code : ";
   for (auto vrx : gcode) {

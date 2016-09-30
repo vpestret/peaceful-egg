@@ -8,7 +8,7 @@
 #include <sstream>
 #include <random>
 
-const size_t N = 6;
+const size_t NMAX = 6;
 
 class Vertex;
 
@@ -21,8 +21,11 @@ public:
 
 class Vertex {
 public:
-  std::bitset<N> code;
+  std::bitset<NMAX> code;
   std::list<VrxAdj> adjs;
+  size_t code_bits;
+  Vertex(const std::bitset<NMAX>& _code, size_t _code_bits) :
+    code(_code), code_bits(_code_bits) {}
   void AppendAdj(const VrxAdj& ca) {
     auto iter = adjs.begin();
     for (; iter != adjs.end() && ca.dst > iter->dst; iter++);
@@ -30,8 +33,8 @@ public:
   }
   operator std::string() {
     std::string s2r;
-    for (size_t idx = 0; idx < code.size(); idx ++) {
-      s2r += code[code.size() - idx - 1] ? "1" : "0";
+    for (size_t idx = 0; idx < code_bits; idx ++) {
+      s2r += code[code_bits - idx - 1] ? "1" : "0";
     }
     return s2r;
   }
@@ -48,4 +51,4 @@ public:
   }
 };
 
-std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed);
+std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bits);

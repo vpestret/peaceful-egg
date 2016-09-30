@@ -9,20 +9,16 @@
 #include <random>
 #include "codegen.h"
 
-size_t ham_dist(const std::bitset<N>& l, const std::bitset<N>& r) {
-  return N - (~(l ^ r)).count();
+size_t ham_dist(const std::bitset<NMAX>& l, const std::bitset<NMAX>& r) {
+  return NMAX - (~(l ^ r)).count();
 }
 
-std::vector<std::shared_ptr<Vertex> > GenGrayCodeGraph(size_t thr) {
-  std::list<std::shared_ptr<Vertex> > vertexes(1 << N);
+std::vector<std::shared_ptr<Vertex> > GenGrayCodeGraph(size_t thr, size_t code_bits) {
+  std::list<std::shared_ptr<Vertex> > vertexes(1 << code_bits);
   // Fill gray code table.
   auto iter = vertexes.begin();
-  for (size_t idx = 0; idx < vertexes.size(); idx ++) {
-    std::bitset<N> num(idx);
-    Vertex* pv = new Vertex;
-    pv->code = num ^ (num >> 1);
-    iter->reset(pv);
-    iter++;
+  for (size_t idx = 0; idx < vertexes.size(); idx++, iter++) {
+    iter->reset(new Vertex(std::bitset<NMAX>(idx), code_bits));
   }
   // Find adjacencies.
   for (auto iter1 = vertexes.begin(); iter1 != vertexes.end(); iter1++) {
@@ -54,7 +50,8 @@ std::vector<std::shared_ptr<Vertex> > GenGrayCodeGraph(size_t thr) {
   return vec2ret;
 }
 
-std::list<std::shared_ptr<Vertex> > FindSubset(std::shared_ptr<Vertex> pivot, size_t thr, std::list<std::shared_ptr<Vertex> > src) {
+std::list<std::shared_ptr<Vertex> > FindSubset(std::shared_ptr<Vertex> pivot, size_t thr,
+                                               std::list<std::shared_ptr<Vertex> > src) {
   std::list<std::shared_ptr<Vertex> > vertexes(src.begin(), src.end());
   // close located vertexes.
   for (auto iter = vertexes.begin(); iter != vertexes.end(); ) {
@@ -77,9 +74,10 @@ std::list<std::shared_ptr<Vertex> > FindSubset0(std::shared_ptr<Vertex> pivot, s
 }
 
 
-std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed) {
+std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bits) {
   const size_t DIST = 3;
-  std::vector<std::shared_ptr<Vertex> > graph = GenGrayCodeGraph(DIST);
+  if (code_bits > NMAX) throw std::out_of_range("maximum code width exceeded");
+  std::vector<std::shared_ptr<Vertex> > graph = GenGrayCodeGraph(DIST, code_bits);
 
   //std::cout << "Adjacency graph\n";
   //for (auto vrx : graph) {
