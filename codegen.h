@@ -8,6 +8,7 @@
 #include <sstream>
 #include <random>
 #include <unordered_map>
+#include <set>
 
 const size_t NMAX = 6;
 
@@ -25,7 +26,7 @@ public:
   std::bitset<NMAX> code;
   std::list<VrxAdj> adjs;
   size_t code_bits;
-  std::unordered_map<std::bitset<NMAX>, size_t> sp1;
+  std::unordered_map<std::bitset<NMAX>, std::set<size_t> > sp1;
   std::vector<std::bitset<NMAX> > sp2;
   Vertex(const std::bitset<NMAX>& _code, size_t _code_bits) :
     code(_code), code_bits(_code_bits) {}
@@ -57,9 +58,13 @@ public:
   std::string string_w_sp1() {
     std::string s2r = (std::string)(*this);
     s2r += " {";
-    for(const auto& p : sp1) {
+    for (const auto& p : sp1) {
       std::stringstream ss;
-      ss << p.first << ":" << p.second;
+      ss << p.first << ":(";
+      for (const auto& idx: p.second) {
+        ss << idx << " ";
+      }
+      ss << ")";
       s2r += ss.str() + " ";
     }
     s2r += "}";

@@ -20,9 +20,9 @@ int main(int argc, char* argv[]) {
 
   intersect_code_spheres(gcode);
 
-  std::cout << "Close spheres : ";
+  std::cout << "Close spheres\n";
   for (auto vrx : gcode) {
-    std::cout << vrx->string_w_sp1() << " ";
+    std::cout << vrx->string_w_sp1() << "\n";
   }
   std::cout << std::endl;
 

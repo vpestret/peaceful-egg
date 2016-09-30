@@ -93,7 +93,7 @@ std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bit
 
 void Vertex::PrepareSheres(size_t no_one_value) {
   for (size_t idx1 = 0; idx1 < this->code_bits; idx1++) {
-    this->sp1[this->code ^ std::bitset<NMAX>(1 << idx1)] = no_one_value;
+    this->sp1[this->code ^ std::bitset<NMAX>(1 << idx1)] = std::set<size_t>(); // empty set
     for (size_t idx2 = idx1 + 1; idx2 < this->code_bits; idx2++) {
       this->sp2.emplace_back(this->code ^ std::bitset<NMAX>((1 << idx1) | (1 << idx2)));
     }
@@ -118,13 +118,9 @@ void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code) {
         std::string s2 = (std::string)(*val2);
         // cycle over all sp1
         for (auto& ps1: val1->sp1) {
-          if (ps1.second != more_than_one &&
+          if (ps1.second.find(idx2) == ps1.second.end() &&
               std::find(val2->sp2.begin(), val2->sp2.end(),  ps1.first) != val2->sp2.end()) {
-            if (ps1.second == no_one) {
-              ps1.second = idx2;
-            } else {
-              ps1.second = more_than_one;
-            }
+            ps1.second.insert(idx2);
           }
         }
       }
