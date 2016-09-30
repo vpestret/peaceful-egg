@@ -13,7 +13,7 @@ size_t ham_dist(const std::bitset<NMAX>& l, const std::bitset<NMAX>& r) {
   return NMAX - (~(l ^ r)).count();
 }
 
-std::vector<std::shared_ptr<Vertex> > GenGrayCodeGraph(size_t thr, size_t code_bits) {
+std::vector<std::shared_ptr<Vertex> > GenBinaryCodeGraph(size_t thr, size_t code_bits) {
   std::list<std::shared_ptr<Vertex> > vertexes(1 << code_bits);
   // Fill gray code table.
   auto iter = vertexes.begin();
@@ -77,21 +77,13 @@ std::list<std::shared_ptr<Vertex> > FindSubset0(std::shared_ptr<Vertex> pivot, s
 std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bits) {
   const size_t DIST = 3;
   if (code_bits > NMAX) throw std::out_of_range("maximum code width exceeded");
-  std::vector<std::shared_ptr<Vertex> > graph = GenGrayCodeGraph(DIST, code_bits);
-
-  //std::cout << "Adjacency graph\n";
-  //for (auto vrx : graph) {
-  //  std::cout << vrx->string_w_adjs() << std::endl;
-  //}
-
-  //for (auto elem : graph) {
-
+  std::vector<std::shared_ptr<Vertex> > graph = GenBinaryCodeGraph(DIST, code_bits);
+  // Generate code by decimation.
   std::default_random_engine gen(seed);
   std::uniform_int_distribution<size_t> idxgen(0, graph.size() - 1);
+  // Start from random node
   auto elem = graph[idxgen(gen)];
-
   std::vector<std::shared_ptr<Vertex> > gcode;
-
   gcode.push_back(elem);
   gcode.push_back(gcode[0]->adjs.front().vrx);
   std::list<std::shared_ptr<Vertex> > ss = FindSubset0(gcode[1], DIST, gcode[0]->adjs);
@@ -100,14 +92,10 @@ std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bit
     gcode.push_back(ss.front());
     ss = FindSubset(gcode[idx++], DIST, ss);
   }
-
-//  }
-
-  //std::cout << "Generated code : ";
-  //for (auto vrx : gcode) {
-  //  std::cout << (std::string)(*vrx) << " ";
-  //}
-  //std::cout << std::endl;
+  // Remove adjacencies because it isn't correct anymore.
+  for (auto elem : gcode) {
+    elem->adjs.clear();
+  }
 
   return gcode;
 }
