@@ -7,6 +7,7 @@
 #include <memory>
 #include <sstream>
 #include "codegen.h"
+#include "mapgen.h"
 
 int main(int argc, char* argv[]) {
 
@@ -25,6 +26,8 @@ int main(int argc, char* argv[]) {
     std::cout << vrx->string_w_sp1() << "\n";
   }
   std::cout << std::endl;
+
+  auto maplayers = generate_map_from_code(gcode);
 
   std::getchar();
 

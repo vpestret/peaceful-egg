@@ -10,6 +10,9 @@
 #include <unordered_map>
 #include <set>
 
+#ifndef _CODEGEN_H_
+#define _CODEGEN_H_
+
 const size_t NMAX = 6;
 
 class Vertex;
@@ -94,3 +97,5 @@ public:
 std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bits);
 
 void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code);
+
+#endif // _CODEGEN_H_
