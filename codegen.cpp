@@ -91,7 +91,7 @@ std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bit
   return gcode;
 }
 
-void Vertex::PrepareSheres(size_t no_one_value) {
+void Vertex::PrepareSheres() {
   for (size_t idx1 = 0; idx1 < this->code_bits; idx1++) {
     this->sp1[this->code ^ std::bitset<NMAX>(1 << idx1)] = std::vector<PortUsage>(); // empty set
     for (size_t idx2 = 0; idx2 < this->code_bits; idx2++) {
@@ -108,10 +108,8 @@ void Vertex::PrepareSheres(size_t no_one_value) {
 
 void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code) {
   // Initialize spheres.
-  size_t no_one = code.size() + 1;
-  size_t more_than_one = code.size();
   for (auto iter1 = code.begin(); iter1 != code.end(); iter1++) {
-    (*iter1)->PrepareSheres(no_one);
+    (*iter1)->PrepareSheres();
   }
   // Find intersections.
   for (auto iter1 = code.begin(); iter1 != code.end(); iter1++) { // sp 1

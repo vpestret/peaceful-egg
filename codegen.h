@@ -45,7 +45,7 @@ public:
   unsigned used;
   Vertex(const std::bitset<NMAX>& _code, size_t _code_bits) :
     code(_code), code_bits(_code_bits), used(used_Unused) {}
-  void PrepareSheres(size_t no_one_value);
+  void PrepareSheres();
 
   void AppendAdj(const VrxAdj& ca) {
     auto iter = adjs.begin();
