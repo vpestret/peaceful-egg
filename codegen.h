@@ -21,10 +21,11 @@ public:
   size_t dst;
 };
 
+const unsigned used_Unused = 0;
+
 class PortUsage {
 public:
-  static const unsigned Unused = 0;
-  PortUsage() : connected(false), from_code(-1), from_port(-1), used(Unused) {}
+  PortUsage() : connected(false), from_code(-1), from_port(-1), used(used_Unused) {}
   bool connected;
   size_t from_code;
   size_t from_port;
@@ -38,8 +39,9 @@ public:
   size_t code_bits;
   std::unordered_map<std::bitset<NMAX>, std::vector<PortUsage> > sp1;
   std::unordered_map<std::bitset<NMAX>, std::vector<size_t>> sp2;
+  unsigned used;
   Vertex(const std::bitset<NMAX>& _code, size_t _code_bits) :
-    code(_code), code_bits(_code_bits) {}
+    code(_code), code_bits(_code_bits), used(used_Unused) {}
   void PrepareSheres(size_t no_one_value);
 
   void AppendAdj(const VrxAdj& ca) {
