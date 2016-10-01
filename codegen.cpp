@@ -93,9 +93,15 @@ std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bit
 
 void Vertex::PrepareSheres(size_t no_one_value) {
   for (size_t idx1 = 0; idx1 < this->code_bits; idx1++) {
-    this->sp1[this->code ^ std::bitset<NMAX>(1 << idx1)] = std::set<size_t>(); // empty set
-    for (size_t idx2 = idx1 + 1; idx2 < this->code_bits; idx2++) {
-      this->sp2.emplace_back(this->code ^ std::bitset<NMAX>((1 << idx1) | (1 << idx2)));
+    this->sp1[this->code ^ std::bitset<NMAX>(1 << idx1)] = std::vector<PortUsage>(); // empty set
+    for (size_t idx2 = 0; idx2 < this->code_bits; idx2++) {
+      if (idx1 != idx2) {
+        auto cti = this->code ^ std::bitset<NMAX>((1 << idx1) | (1 << idx2));
+        if (this->sp2.find(cti) == this->sp2.end()) {
+          this->sp2[cti] = std::vector<size_t>();
+        }
+        this->sp2[cti].push_back(idx1);
+      }
     }
   }
 }
@@ -118,9 +124,15 @@ void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code) {
         std::string s2 = (std::string)(*val2);
         // cycle over all sp1
         for (auto& ps1: val1->sp1) {
-          if (ps1.second.find(idx2) == ps1.second.end() &&
-              std::find(val2->sp2.begin(), val2->sp2.end(),  ps1.first) != val2->sp2.end()) {
-            ps1.second.insert(idx2);
+          for (auto& ps2: val2->sp2) {
+            if (ps2.first == ps1.first) {
+              for(auto  port : ps2.second) {
+                ps1.second.push_back(PortUsage());
+                ps1.second.back().connected = true;
+                ps1.second.back().from_code = idx2;
+                ps1.second.back().from_port = port;
+              }
+            }
           }
         }
       }
