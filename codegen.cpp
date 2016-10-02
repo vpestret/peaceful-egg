@@ -93,7 +93,8 @@ std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bit
 
 void Vertex::PrepareSheres() {
   for (size_t idx1 = 0; idx1 < this->code_bits; idx1++) {
-    this->sp1[this->code ^ std::bitset<NMAX>(1 << idx1)] = std::vector<PortUsage>(); // empty set
+    this->sp1.push_back(this->code ^ std::bitset<NMAX>(1 << idx1));
+    this->sp1_pu.push_back(PortUsage());
     for (size_t idx2 = 0; idx2 < this->code_bits; idx2++) {
       if (idx1 != idx2) {
         auto cti = this->code ^ std::bitset<NMAX>((1 << idx1) | (1 << idx2));
@@ -121,14 +122,13 @@ void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code) {
         std::string s1 = (std::string)(*val1);
         std::string s2 = (std::string)(*val2);
         // cycle over all sp1
-        for (auto& ps1: val1->sp1) {
+        for (size_t idx1 = 0; idx1 < val1->code_bits; idx1++) {
           for (auto& ps2: val2->sp2) {
-            if (ps2.first == ps1.first) {
+            if (ps2.first == val1->sp1[idx1]) {
               for(auto  port : ps2.second) {
-                ps1.second.push_back(PortUsage());
-                ps1.second.back().connected = true;
-                ps1.second.back().from_code = idx2;
-                ps1.second.back().from_port = port;
+                val1->sp1_pu[idx1].conn.push_back(PortConn());
+                val1->sp1_pu[idx1].conn.back().from_code = idx2;
+                val1->sp1_pu[idx1].conn.back().from_port = port;
               }
             }
           }

@@ -26,12 +26,17 @@ public:
 
 const unsigned used_Unused = 0;
 
-class PortUsage {
+class PortConn {
 public:
-  PortUsage() : connected(false), from_code(-1), from_port(-1), used(used_Unused) {}
-  bool connected;
+  PortConn() : from_code(-1), from_port(-1) {}
   size_t from_code;
   size_t from_port;
+};
+
+class PortUsage {
+public:
+  PortUsage() : used(used_Unused) {}
+  std::vector<PortConn> conn;
   unsigned used;
 };
 
@@ -40,7 +45,8 @@ public:
   std::bitset<NMAX> code;
   std::list<VrxAdj> adjs;
   size_t code_bits;
-  std::unordered_map<std::bitset<NMAX>, std::vector<PortUsage> > sp1;
+  std::vector<std::bitset<NMAX> > sp1;
+  std::vector<PortUsage> sp1_pu;
   std::unordered_map<std::bitset<NMAX>, std::vector<size_t>> sp2;
   unsigned used;
   Vertex(const std::bitset<NMAX>& _code, size_t _code_bits) :
@@ -73,18 +79,11 @@ public:
   std::string string_w_sp1() {
     std::string s2r = (std::string)(*this);
     s2r += " {";
-    for (size_t idx1 = 0; idx1 < this->code_bits; idx1++) {
-      auto key = this->code ^ std::bitset<NMAX>(1 << idx1);
-      auto it = sp1.find(key);
-      auto& p = *it;
+    for (size_t idx = 0; idx < this->code_bits; idx++) {
       std::stringstream ss;
-      ss << p.first << "(";
-      for (const auto& pu: p.second) {
-        if (pu.connected) {
-          ss << pu.from_code << ":" << pu.from_port << " ";
-        } else {
-          ss << "NC";
-        }
+      ss << sp1[idx] << "(";
+      for (const auto& co: sp1_pu[idx].conn) {
+        ss << co.from_code << ":" << co.from_port << " ";
       }
       ss << ")";
       s2r += ss.str() + " ";
