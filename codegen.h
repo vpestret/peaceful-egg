@@ -58,12 +58,15 @@ public:
     for (; iter != adjs.end() && ca.dst > iter->dst; iter++);
     adjs.insert(iter, ca);
   }
-  operator std::string() {
+  static std::string to_string(std::bitset<NMAX> code, size_t code_bits) {
     std::string s2r;
     for (size_t idx = 0; idx < code_bits; idx ++) {
       s2r += code[code_bits - idx - 1] ? "1" : "0";
     }
     return s2r;
+  }
+  operator std::string() {
+    return to_string(code, code_bits);
   }
   std::string string_w_adjs() {
     std::string s2r = (std::string)(*this);
@@ -78,10 +81,10 @@ public:
   }
   std::string string_w_sp1() {
     std::string s2r = (std::string)(*this);
-    s2r += " {";
+    s2r += std::string(this->used != used_Unused ? "*" : " ") + "{";
     for (size_t idx = 0; idx < this->code_bits; idx++) {
       std::stringstream ss;
-      ss << sp1[idx] << "(";
+      ss << sp1[idx] << (sp1_pu[idx].used != used_Unused ? "*" : " ") << "(";
       for (const auto& co: sp1_pu[idx].conn) {
         ss << co.from_code << ":" << co.from_port << " ";
       }
