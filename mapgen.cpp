@@ -1,16 +1,17 @@
-#include "codegen.h"
+#include "mapgen.h"
 
+const unsigned one_level_route_length = 3;
 
-std::vector<std::vector<std::bitset<NMAX> > > generate_map_from_code(std::vector<std::shared_ptr<Vertex> >& code) {
-  std::vector<std::vector<std::bitset<NMAX> > > map2ret;
-  std::vector<std::bitset<NMAX> > level0;
-  // Selecting start index.
-  size_t curr_idx = 0; // here
-  std::cout << "Start vertex " << curr_idx << "-" << code[curr_idx]->code << "\n";
-  unsigned used_tag = 1;
-  level0.push_back(code[curr_idx]->code);
+std::vector<std::bitset<NMAX> > generate_path(std::default_random_engine gen,
+                                              std::vector<std::shared_ptr<Vertex> >& code,
+                                              size_t curr_idx,
+                                              unsigned used_tag,
+                                              unsigned route_length) {
+  std::vector<std::bitset<NMAX> > level;
+
+  level.push_back(code[curr_idx]->code);
   code[curr_idx]->used = used_tag;
-  const unsigned route_length = 7;
+
   unsigned curr_length = 0;
   while (curr_length < route_length) {
     // Vertex based routing.
@@ -31,7 +32,14 @@ std::vector<std::vector<std::bitset<NMAX> > > generate_map_from_code(std::vector
     }
     std::cout << "\n";
     // Select target index.
-    size_t tgt_idx = *possibles.begin(); // here
+    std::uniform_int_distribution<size_t> idxgen(0, possibles.size() - 1);
+    size_t idx_in_pos = idxgen(gen);
+    size_t tgt_idx = *possibles.begin();
+    for (const auto& idx : possibles) {
+      if (idx_in_pos-- == 0) {
+        tgt_idx = idx;
+      }
+    }
     std::cout << "Target vertex " << tgt_idx << "-" << code[tgt_idx]->code << "\n";
     // Find a route.
     size_t curr_port = code[curr_idx]->sp1.size(); // this value means not found.
@@ -52,20 +60,20 @@ std::vector<std::vector<std::bitset<NMAX> > > generate_map_from_code(std::vector
       // Link found make a connection.
       std::cout << "Route from " << curr_idx << ":" << curr_port << "-" << code[curr_idx]->sp1[curr_port] << " ";
       std::cout << "to " << tgt_idx << ":" << tgt_port << "-" << code[tgt_idx]->sp1[tgt_port] << "\n";
-      level0.push_back(code[curr_idx]->sp1[curr_port]);
+      level.push_back(code[curr_idx]->sp1[curr_port]);
       code[curr_idx]->sp1_pu[curr_port].used = used_tag;
       // Make also as used all other incoming ports.
       for (const auto& co : code[curr_idx]->sp1_pu[curr_port].conn) {
         code[co.from_code]->sp1_pu[co.from_port].used = used_tag;
       }
-      level0.push_back(code[tgt_idx]->sp1[tgt_port]);
+      level.push_back(code[tgt_idx]->sp1[tgt_port]);
       code[tgt_idx]->sp1_pu[tgt_port].used = used_tag;
       // Make also as used all other incoming ports.
       for (const auto& co : code[tgt_idx]->sp1_pu[tgt_port].conn) {
         code[co.from_code]->sp1_pu[co.from_port].used = used_tag;
       }
       // And finally add the target vertex to the used list.
-      level0.push_back(code[tgt_idx]->code);
+      level.push_back(code[tgt_idx]->code);
       code[tgt_idx]->used = used_tag;
       // Debug dump examination.
       std::cout << "Used spheres\n";
@@ -74,7 +82,7 @@ std::vector<std::vector<std::bitset<NMAX> > > generate_map_from_code(std::vector
       }
       std::cout << std::endl;
       std::cout << "Path: ";
-      for (const auto& c2p : level0) {
+      for (const auto& c2p : level) {
         std::cout << Vertex::to_string(c2p, code[0]->code_bits) << " ";
       }
       std::cout << "\n";
@@ -89,7 +97,24 @@ std::vector<std::vector<std::bitset<NMAX> > > generate_map_from_code(std::vector
     }
   }
 
-  map2ret.push_back(level0);
+  // Before return remove last vertex from level because it should be exit.
+  level.pop_back();
+  return level;
+}
+
+LevelsMap generate_map_from_code(size_t seed, std::vector<std::shared_ptr<Vertex> >& code, unsigned n_levels) {
+  LevelsMap map2ret;
+  // Generating level 0.
+  std::default_random_engine gen(seed);
+  std::uniform_int_distribution<size_t> idxgen(0, code.size() - 1);
+  // Selecting start index.
+  size_t curr_idx = idxgen(gen);
+  std::cout << "Trying start vertex " << curr_idx << "-" << code[curr_idx]->code << "\n";
+  unsigned used_tag = 1;
+  if (code[curr_idx]->used != used_Unused) throw std::runtime_error("intended start code is already used");
+  std::vector<std::bitset<NMAX> > level0 = generate_path(gen, code, curr_idx, used_tag, one_level_route_length);
+
+  map2ret.levels.push_back(level0);
 
   return map2ret;
 }

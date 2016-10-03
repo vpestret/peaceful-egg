@@ -29,11 +29,11 @@ int main(int argc, char* argv[]) {
   }
   std::cout << std::endl;
 
-  auto maplayers = generate_map_from_code(gcode);
+  auto levelsmap = generate_map_from_code(0, gcode, 3);
 
   std::cout << "Layers built\n";
   size_t layer_idx = 0;
-  for (const auto& layer : maplayers) {
+  for (const auto& layer : levelsmap.levels) {
     std::cout << "Layer " << layer_idx << ": ";
     for (const auto& code : layer) {
       std::cout << Vertex::to_string(code, code_bits) << " ";
