@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
   std::cout << std::endl;
 
   std::ofstream ofs("labyrinth.v");
-  generate_verilog(levelsmap, ofs);
+  generate_verilog_dnf(levelsmap, ofs);
   ofs.close();
 
   std::getchar();

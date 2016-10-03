@@ -129,6 +129,7 @@ LevelsMap generate_map_from_code(size_t seed, std::vector<std::shared_ptr<Vertex
     used_tag = 3 - used_tag;
   }
 
+  map2ret.code_bits = code[0]->code_bits;
   return map2ret;
 }
 
@@ -151,6 +152,67 @@ void generate_verilog(const LevelsMap& lm, std::ostream& ost) {
           << lm.levels[level_idx][term_idx] << ");\n";
     }
     ost << "  assign Q[" << level_idx << "] = (| term" << level_idx << ");\n";
+  }
+
+  ost << "endmodule\n";
+
+}
+
+std::string conv2term(std::bitset<NMAX> bs, size_t code_bits) {
+  std::stringstream ss;
+  for (size_t idx = 0; idx < code_bits; idx ++) {
+    if (bs[code_bits - idx - 1]) {
+      ss << " A[" << (code_bits - idx - 1) << "]";
+    } else {
+      ss << "~A[" << (code_bits - idx - 1) << "]";
+    }
+    if (idx != code_bits - 1) {
+      ss << " & ";
+    }
+  }
+  std::string s2r = ss.str();
+  return s2r;
+}
+
+void generate_verilog_dnf(const LevelsMap& lm, std::ostream& ost) {
+
+  std::vector<std::bitset<NMAX> > terms_vec;
+  for (unsigned level_idx = 0; level_idx < lm.levels.size(); level_idx++) {
+    for (unsigned term_idx = 0; term_idx < lm.levels[level_idx].size(); term_idx++) {
+      auto& term = lm.levels[level_idx][term_idx];
+      if (std::find(terms_vec.begin(), terms_vec.end(), term) == terms_vec.end()) {
+        terms_vec.push_back(term);
+      }
+    }
+  }
+
+  ost << "module labyrinth (\n"
+    "  A,  //  binary input\n"
+    "  Q   //  output\n"
+    ");\n";
+
+  ost << "  input [" << lm.levels[0][0].size() - 1 << ":0] A;\n";
+  ost << "  output [" << lm.levels.size() - 1 << ":0] Q;\n";
+
+  ost << "  wire [" << lm.levels.size() -1 << ":0] Q;\n";
+
+  // Print terms.
+  ost << "  wire [" << terms_vec.size() -1 << ":0] term;\n";
+  for (unsigned term_idx = 0; term_idx < terms_vec.size(); term_idx++) {
+    ost << "  assign term[" << term_idx << "] = "
+        << conv2term(terms_vec[term_idx], lm.code_bits) << ";\n";
+  }
+
+  for (unsigned level_idx = 0; level_idx < lm.levels.size(); level_idx++) {
+    ost << "  assign Q[" << level_idx << "] = 1'b0";
+    for (unsigned term_idx = 0; term_idx < lm.levels[level_idx].size(); term_idx++) {
+      // Find term.
+      auto& term = lm.levels[level_idx][term_idx];
+      size_t vec_idx = std::find(terms_vec.begin(), terms_vec.end(), term) - terms_vec.begin();
+
+      ost << " | term[" << vec_idx << "]";
+    }
+    ost << ";\n";
   }
 
   ost << "endmodule\n";
