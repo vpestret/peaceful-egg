@@ -137,3 +137,12 @@ void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code) {
     }
   }
 }
+
+void clear_tag(std::vector<std::shared_ptr<Vertex> >& code, unsigned used_tag) {
+  for (const auto& vrx : code) {
+    if (vrx->used == used_tag) vrx->used = used_Unused;
+    for (size_t idx = 0; idx < vrx->sp1_pu.size(); idx++) {
+      if (vrx->sp1_pu[idx].used == used_tag) vrx->sp1_pu[idx].used = used_Unused;
+    }
+  }
+}

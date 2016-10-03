@@ -81,10 +81,19 @@ public:
   }
   std::string string_w_sp1() {
     std::string s2r = (std::string)(*this);
-    s2r += std::string(this->used != used_Unused ? "*" : " ") + "{";
+    std::stringstream ss;
+    ss << (this->used != used_Unused ? "*" : "  ");
+    if (this->used != used_Unused) {
+      ss << this->used;
+    }
+    s2r += ss.str() + "{";
     for (size_t idx = 0; idx < this->code_bits; idx++) {
       std::stringstream ss;
-      ss << sp1[idx] << (sp1_pu[idx].used != used_Unused ? "*" : " ") << "(";
+      ss << sp1[idx] << (sp1_pu[idx].used != used_Unused ? "*" : "  ");
+      if (sp1_pu[idx].used != used_Unused) {
+        ss << sp1_pu[idx].used;
+      }
+      ss << "(";
       for (const auto& co: sp1_pu[idx].conn) {
         ss << co.from_code << ":" << co.from_port << " ";
       }
@@ -99,5 +108,7 @@ public:
 std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bits);
 
 void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code);
+
+void clear_tag(std::vector<std::shared_ptr<Vertex> >& code, unsigned used_tag);
 
 #endif // _CODEGEN_H_

@@ -4,7 +4,7 @@ const unsigned one_level_route_length = 3;
 
 std::vector<std::bitset<NMAX> > generate_path(std::default_random_engine gen,
                                               std::vector<std::shared_ptr<Vertex> >& code,
-                                              size_t curr_idx,
+                                              size_t& curr_idx,
                                               unsigned used_tag,
                                               unsigned route_length) {
   std::vector<std::bitset<NMAX> > level;
@@ -32,66 +32,67 @@ std::vector<std::bitset<NMAX> > generate_path(std::default_random_engine gen,
     }
     std::cout << "\n";
     // Select target index.
-    std::uniform_int_distribution<size_t> idxgen(0, possibles.size() - 1);
-    size_t idx_in_pos = idxgen(gen);
-    size_t tgt_idx = *possibles.begin();
-    for (const auto& idx : possibles) {
-      if (idx_in_pos-- == 0) {
-        tgt_idx = idx;
-      }
-    }
-    std::cout << "Target vertex " << tgt_idx << "-" << code[tgt_idx]->code << "\n";
-    // Find a route.
-    size_t curr_port = code[curr_idx]->sp1.size(); // this value means not found.
-    size_t tgt_port = code[tgt_idx]->sp1.size(); // this value means not found.
-    // Cycle over target ports to find unused pair to make a connection.
-    for (size_t port_idx = 0; port_idx < code[tgt_idx]->code_bits; port_idx++) {
-      for (const auto& co : code[tgt_idx]->sp1_pu[port_idx].conn) {
-        if (co.from_code == curr_idx && code[tgt_idx]->sp1_pu[port_idx].used == used_Unused &&
-            code[curr_idx]->sp1_pu[co.from_port].used == used_Unused) {
-          curr_port = co.from_port;
-          tgt_port = port_idx;
-          port_idx = code[tgt_idx]->code_bits; // exiting outer loop this way.
-          break;
+    std::vector<size_t> tgt_idxes(possibles.begin(), possibles.end());
+    bool connection_made = false;
+    for (auto tgt_idx : tgt_idxes) {
+      std::cout << "Target vertex " << tgt_idx << "-" << code[tgt_idx]->code << "\n";
+      // Find a route.
+      size_t curr_port = code[curr_idx]->sp1.size(); // this value means not found.
+      size_t tgt_port = code[tgt_idx]->sp1.size(); // this value means not found.
+      // Cycle over target ports to find unused pair to make a connection.
+      for (size_t port_idx = 0; port_idx < code[tgt_idx]->code_bits; port_idx++) {
+        for (const auto& co : code[tgt_idx]->sp1_pu[port_idx].conn) {
+          if (co.from_code == curr_idx && code[tgt_idx]->sp1_pu[port_idx].used == used_Unused &&
+              code[curr_idx]->sp1_pu[co.from_port].used == used_Unused) {
+            curr_port = co.from_port;
+            tgt_port = port_idx;
+            port_idx = code[tgt_idx]->code_bits; // exiting outer loop this way.
+            break;
+          }
         }
       }
-    }
-    if (curr_port != code[curr_idx]->sp1.size()) {
-      // Link found make a connection.
-      std::cout << "Route from " << curr_idx << ":" << curr_port << "-" << code[curr_idx]->sp1[curr_port] << " ";
-      std::cout << "to " << tgt_idx << ":" << tgt_port << "-" << code[tgt_idx]->sp1[tgt_port] << "\n";
-      level.push_back(code[curr_idx]->sp1[curr_port]);
-      code[curr_idx]->sp1_pu[curr_port].used = used_tag;
-      // Make also as used all other incoming ports.
-      for (const auto& co : code[curr_idx]->sp1_pu[curr_port].conn) {
-        code[co.from_code]->sp1_pu[co.from_port].used = used_tag;
+      if (curr_port != code[curr_idx]->sp1.size()) {
+        // Link found make a connection.
+        std::cout << "Route from " << curr_idx << ":" << curr_port << "-" << code[curr_idx]->sp1[curr_port] << " ";
+        std::cout << "to " << tgt_idx << ":" << tgt_port << "-" << code[tgt_idx]->sp1[tgt_port] << "\n";
+        level.push_back(code[curr_idx]->sp1[curr_port]);
+        code[curr_idx]->sp1_pu[curr_port].used = used_tag;
+        // Make also as used all other incoming ports.
+        for (const auto& co : code[curr_idx]->sp1_pu[curr_port].conn) {
+          code[co.from_code]->sp1_pu[co.from_port].used = used_tag;
+        }
+        level.push_back(code[tgt_idx]->sp1[tgt_port]);
+        code[tgt_idx]->sp1_pu[tgt_port].used = used_tag;
+        // Make also as used all other incoming ports.
+        for (const auto& co : code[tgt_idx]->sp1_pu[tgt_port].conn) {
+          code[co.from_code]->sp1_pu[co.from_port].used = used_tag;
+        }
+        // And finally add the target vertex to the used list.
+        level.push_back(code[tgt_idx]->code);
+        code[tgt_idx]->used = used_tag;
+        // Debug dump examination.
+        std::cout << "Used spheres\n";
+        for (const auto& vrx : code) {
+          std::cout << vrx->string_w_sp1() << "\n";
+        }
+        std::cout << std::endl;
+        std::cout << "Path: ";
+        for (const auto& c2p : level) {
+          std::cout << Vertex::to_string(c2p, code[0]->code_bits) << " ";
+        }
+        std::cout << "\n";
+        // Debug dump examination pause.
+        std::getchar();
+        // Got to next iteration.
+        curr_length++;
+        curr_idx = tgt_idx;
+        connection_made = true;
+        break; // leave cycle over tgt_idx
+      } else {
+        std::cout << "No link found for tgt_idx =  " << tgt_idx << "\n";
       }
-      level.push_back(code[tgt_idx]->sp1[tgt_port]);
-      code[tgt_idx]->sp1_pu[tgt_port].used = used_tag;
-      // Make also as used all other incoming ports.
-      for (const auto& co : code[tgt_idx]->sp1_pu[tgt_port].conn) {
-        code[co.from_code]->sp1_pu[co.from_port].used = used_tag;
-      }
-      // And finally add the target vertex to the used list.
-      level.push_back(code[tgt_idx]->code);
-      code[tgt_idx]->used = used_tag;
-      // Debug dump examination.
-      std::cout << "Used spheres\n";
-      for (const auto& vrx : code) {
-        std::cout << vrx->string_w_sp1() << "\n";
-      }
-      std::cout << std::endl;
-      std::cout << "Path: ";
-      for (const auto& c2p : level) {
-        std::cout << Vertex::to_string(c2p, code[0]->code_bits) << " ";
-      }
-      std::cout << "\n";
-      // Debug dump examination pause.
-      std::getchar();
-      // Got to next iteration.
-      curr_length++;
-      curr_idx = tgt_idx;
-    } else {
+    } // cycle over tgt_idx
+    if (!connection_made) {
       std::cout << "No route found, exiting at length " << curr_length << "\n";
       break;
     }
@@ -112,9 +113,21 @@ LevelsMap generate_map_from_code(size_t seed, std::vector<std::shared_ptr<Vertex
   std::cout << "Trying start vertex " << curr_idx << "-" << code[curr_idx]->code << "\n";
   unsigned used_tag = 1;
   if (code[curr_idx]->used != used_Unused) throw std::runtime_error("intended start code is already used");
+  map2ret.start_idx = curr_idx;
   std::vector<std::bitset<NMAX> > level0 = generate_path(gen, code, curr_idx, used_tag, one_level_route_length);
-
   map2ret.levels.push_back(level0);
+  unsigned prev_used_tag = used_tag;
+  used_tag = 3 - used_tag;
+  for (int idx = 1; idx < n_levels; idx++) {
+    // Remove previously used tag.
+    clear_tag(code, used_tag);
+    // Generate new level with new tag.
+    std::vector<std::bitset<NMAX> > level = generate_path(gen, code, curr_idx, used_tag, one_level_route_length);
+    if (level.empty()) break;
+    map2ret.levels.push_back(level);
+    prev_used_tag = used_tag;
+    used_tag = 3 - used_tag;
+  }
 
   return map2ret;
 }

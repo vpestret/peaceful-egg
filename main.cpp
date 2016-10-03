@@ -9,11 +9,13 @@
 #include "codegen.h"
 #include "mapgen.h"
 
+const size_t rnd_seed = 0;
 const size_t code_bits = 6;
+const size_t num_levels2gen = 3;
 
 int main(int argc, char* argv[]) {
 
-  std::vector<std::shared_ptr<Vertex> > gcode = generate_code(0, code_bits);
+  std::vector<std::shared_ptr<Vertex> > gcode = generate_code(rnd_seed, code_bits);
 
   std::cout << "Generated code : ";
   for (const auto& vrx : gcode) {
@@ -29,7 +31,7 @@ int main(int argc, char* argv[]) {
   }
   std::cout << std::endl;
 
-  auto levelsmap = generate_map_from_code(0, gcode, 3);
+  auto levelsmap = generate_map_from_code(rnd_seed, gcode, num_levels2gen);
 
   std::cout << "Layers built\n";
   size_t layer_idx = 0;
@@ -39,6 +41,7 @@ int main(int argc, char* argv[]) {
       std::cout << Vertex::to_string(code, code_bits) << " ";
     }
     std::cout << "\n";
+    layer_idx++;
   }
   std::cout << std::endl;
 
