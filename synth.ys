@@ -1,0 +1,4 @@
+read_verilog labyrinth.v
+hierarchy; proc; opt; techmap; opt
+show -format svg
+write_verilog synth.v

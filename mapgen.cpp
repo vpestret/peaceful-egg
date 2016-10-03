@@ -131,3 +131,28 @@ LevelsMap generate_map_from_code(size_t seed, std::vector<std::shared_ptr<Vertex
 
   return map2ret;
 }
+
+void generate_verilog(const LevelsMap& lm, std::ostream& ost) {
+  ost << "module labyrinth (\n"
+         "  A,  //  binary input\n"
+         "  Q   //  output\n"
+         ");\n";
+
+  ost << "  input [" << lm.levels[0][0].size() - 1 << ":0] A;\n";
+  ost << "  output [" << lm.levels.size() - 1 << ":0] Q;\n";
+
+  ost << "  wire [" << lm.levels.size() -1 << ":0] Q;\n";
+
+  for (unsigned level_idx = 0; level_idx < lm.levels.size(); level_idx++) {
+    auto& level = lm.levels[level_idx];
+    ost << "  wire [" << level.size() - 1 << ":0] term" << level_idx << ";\n";
+    for (unsigned term_idx = 0; term_idx < lm.levels[level_idx].size(); term_idx++) {
+      ost << "  assign term" << level_idx << "[" << term_idx << "] = (A == 'b"
+          << lm.levels[level_idx][term_idx] << ");\n";
+    }
+    ost << "  assign Q[" << level_idx << "] = (| term" << level_idx << ");\n";
+  }
+
+  ost << "endmodule\n";
+
+}

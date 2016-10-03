@@ -8,6 +8,7 @@
 #include <sstream>
 #include "codegen.h"
 #include "mapgen.h"
+#include <fstream>
 
 const size_t rnd_seed = 0;
 const size_t code_bits = 6;
@@ -44,6 +45,10 @@ int main(int argc, char* argv[]) {
     layer_idx++;
   }
   std::cout << std::endl;
+
+  std::ofstream ofs("labyrinth.v");
+  generate_verilog(levelsmap, ofs);
+  ofs.close();
 
   std::getchar();
 
