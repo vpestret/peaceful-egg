@@ -162,9 +162,9 @@ std::string conv2term(std::bitset<NMAX> bs, size_t code_bits) {
   std::stringstream ss;
   for (size_t idx = 0; idx < code_bits; idx ++) {
     if (bs[code_bits - idx - 1]) {
-      ss << " A[" << (code_bits - idx - 1) << "]";
+      ss << " A" << (code_bits - idx - 1);
     } else {
-      ss << "~A[" << (code_bits - idx - 1) << "]";
+      ss << "~A" << (code_bits - idx - 1);
     }
     if (idx != code_bits - 1) {
       ss << " & ";
@@ -186,31 +186,43 @@ void generate_verilog_dnf(const LevelsMap& lm, std::ostream& ost) {
     }
   }
 
-  ost << "module labyrinth (\n"
-    "  A,  //  binary input\n"
-    "  Q   //  output\n"
-    ");\n";
+  ost << "module labyrinth (\n";
+  for (size_t in_idx = 0; in_idx < lm.levels[0][0].size(); in_idx++) {
+    ost << "  A" << in_idx << ",  //  binary input\n";
+  }
+  for (size_t out_idx = 0; out_idx < lm.levels.size(); out_idx++) {
+    if (out_idx != lm.levels.size() - 1) {
+      ost << "  Q" << out_idx << ",   //  output\n";
+    } else {
+      ost << "  Q" << out_idx << "   //  output\n";
+    }
+  }
+  ost << ");\n";
 
-  ost << "  input [" << lm.levels[0][0].size() - 1 << ":0] A;\n";
-  ost << "  output [" << lm.levels.size() - 1 << ":0] Q;\n";
-
-  ost << "  wire [" << lm.levels.size() -1 << ":0] Q;\n";
+  for (size_t in_idx = 0; in_idx < lm.levels[0][0].size(); in_idx++) {
+    ost << "  input A" << in_idx << ";\n";
+  }
+  for (size_t out_idx = 0; out_idx < lm.levels.size(); out_idx++) {
+    ost << "  output Q" << out_idx << ";\n";
+  }
 
   // Print terms.
-  ost << "  wire [" << terms_vec.size() -1 << ":0] term;\n";
   for (unsigned term_idx = 0; term_idx < terms_vec.size(); term_idx++) {
-    ost << "  assign term[" << term_idx << "] = "
+    ost << "  wire term" << term_idx << ";\n";
+  }
+  for (unsigned term_idx = 0; term_idx < terms_vec.size(); term_idx++) {
+    ost << "  assign term" << term_idx << " = "
         << conv2term(terms_vec[term_idx], lm.code_bits) << ";\n";
   }
 
   for (unsigned level_idx = 0; level_idx < lm.levels.size(); level_idx++) {
-    ost << "  assign Q[" << level_idx << "] = 1'b0";
+    ost << "  assign Q" << level_idx << " = 1'b0";
     for (unsigned term_idx = 0; term_idx < lm.levels[level_idx].size(); term_idx++) {
       // Find term.
       auto& term = lm.levels[level_idx][term_idx];
       size_t vec_idx = std::find(terms_vec.begin(), terms_vec.end(), term) - terms_vec.begin();
 
-      ost << " | term[" << vec_idx << "]";
+      ost << " | term" << vec_idx << "";
     }
     ost << ";\n";
   }

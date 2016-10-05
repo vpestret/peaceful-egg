@@ -1,4 +1,4 @@
 read_verilog labyrinth.v
 hierarchy; proc; opt; techmap; opt
-show -format svg
+show -format svg -stretch
 write_verilog synth.v
