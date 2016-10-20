@@ -11,12 +11,12 @@
 #include <fstream>
 
 const size_t rnd_seed = 0;
-const size_t code_bits = 6;
+const size_t code_bits = 5;
 const size_t num_levels2gen = 3;
 
 int main(int argc, char* argv[]) {
 
-  std::vector<std::shared_ptr<Vertex> > gcode = generate_code(rnd_seed, code_bits);
+  std::vector<std::shared_ptr<Vertex> > gcode = generate_code_d2(rnd_seed, code_bits);
 
   std::cout << "Generated code : ";
   for (const auto& vrx : gcode) {
@@ -24,14 +24,14 @@ int main(int argc, char* argv[]) {
   }
   std::cout << std::endl;
 
-  intersect_code_spheres(gcode, SP1xSP2);
+  intersect_code_spheres(gcode, SP1xSP1);
 
   std::cout << "Close spheres\n";
   for (const auto& vrx : gcode) {
     std::cout << vrx->string_w_sp1() << "\n";
   }
   std::cout << std::endl;
-
+/*
   auto levelsmap = generate_map_from_code(rnd_seed, gcode, num_levels2gen);
 
   std::cout << "Layers built\n";
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
   std::ofstream ofs("labyrinth.v");
   generate_verilog_dnf(levelsmap, ofs);
   ofs.close();
-
+*/
   std::getchar();
 
   return 0;

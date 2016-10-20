@@ -6,7 +6,6 @@ size_t ham_dist(const std::bitset<NMAX>& l, const std::bitset<NMAX>& r) {
 
 std::vector<std::shared_ptr<Vertex> > GenBinaryCodeGraph(size_t thr, size_t code_bits) {
   std::list<std::shared_ptr<Vertex> > vertexes(1 << code_bits);
-  // Fill gray code table.
   auto iter = vertexes.begin();
   for (size_t idx = 0; idx < vertexes.size(); idx++, iter++) {
     iter->reset(new Vertex(std::bitset<NMAX>(idx), code_bits));
@@ -59,13 +58,22 @@ std::list<std::shared_ptr<Vertex> > FindSubset(std::shared_ptr<Vertex> pivot, si
 std::list<std::shared_ptr<Vertex> > FindSubset0(std::shared_ptr<Vertex> pivot, size_t thr, std::list<VrxAdj> src) {
   std::list<std::shared_ptr<Vertex> > l2do;
   for (auto var : src) {
-    l2do.push_back(var.vrx);
+    l2do.emplace_back(var.vrx);
   }
   return FindSubset(pivot, thr, l2do);
 }
 
+std::vector<std::shared_ptr<Vertex> > generate_code_d2(size_t seed, size_t code_bits) {
+  std::vector<std::shared_ptr<Vertex> > gcode(1 << (code_bits - 1));
+  // Fill gray code table.
+  auto iter = gcode.begin();
+  for(size_t num = 0; num < (1 << code_bits); num += 2, iter++) {
+    iter->reset(new Vertex(std::bitset<NMAX>(num ^ (num >> 1)), code_bits));
+  }
+  return gcode;
+}
 
-std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bits) {
+std::vector<std::shared_ptr<Vertex> > generate_code_d3(size_t seed, size_t code_bits) {
   const size_t DIST = 3;
   if (code_bits > NMAX) throw std::out_of_range("maximum code width exceeded");
   std::vector<std::shared_ptr<Vertex> > graph = GenBinaryCodeGraph(DIST, code_bits);
@@ -75,12 +83,12 @@ std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bit
   // Start from random node
   auto elem = graph[idxgen(gen)];
   std::vector<std::shared_ptr<Vertex> > gcode;
-  gcode.push_back(elem);
-  gcode.push_back(gcode[0]->adjs.front().vrx);
+  gcode.emplace_back(elem);
+  gcode.emplace_back(gcode[0]->adjs.front().vrx);
   std::list<std::shared_ptr<Vertex> > ss = FindSubset0(gcode[1], DIST, gcode[0]->adjs);
   size_t idx = 2;
   while(!ss.empty()) {
-    gcode.push_back(ss.front());
+    gcode.emplace_back(ss.front());
     ss = FindSubset(gcode[idx++], DIST, ss);
   }
   // Remove adjacencies because it isn't correct anymore.
@@ -93,15 +101,15 @@ std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bit
 
 void Vertex::PrepareSheres() {
   for (size_t idx1 = 0; idx1 < this->code_bits; idx1++) {
-    this->sp1.push_back(this->code ^ std::bitset<NMAX>(1 << idx1));
-    this->sp1_pu.push_back(PortUsage());
+    this->sp1.emplace_back(this->code ^ std::bitset<NMAX>(1 << idx1));
+    this->sp1_pu.emplace_back(PortUsage());
     for (size_t idx2 = 0; idx2 < this->code_bits; idx2++) {
       if (idx1 != idx2) {
         auto cti = this->code ^ std::bitset<NMAX>((1 << idx1) | (1 << idx2));
         if (this->sp2.find(cti) == this->sp2.end()) {
           this->sp2[cti] = std::vector<size_t>();
         }
-        this->sp2[cti].push_back(idx1);
+        this->sp2[cti].emplace_back(idx1);
       }
     }
   }
@@ -127,7 +135,7 @@ void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code, XSecTyp
             for (auto& psp2_v2: val2->sp2) {
               if (psp2_v2.first == val1->sp1[isp1_v1]) {
                 for(auto  port : psp2_v2.second) {
-                  val1->sp1_pu[isp1_v1].conn.push_back(PortConn());
+                  val1->sp1_pu[isp1_v1].conn.emplace_back(PortConn());
                   val1->sp1_pu[isp1_v1].conn.back().from_code = idx2;
                   val1->sp1_pu[isp1_v1].conn.back().from_port = port;
                 }
@@ -148,7 +156,7 @@ void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code, XSecTyp
           for (size_t isp1_v1 = 0; isp1_v1 < val1->sp1.size(); isp1_v1++) {
             for (size_t isp1_v2 = 0; isp1_v2 < val2->sp1.size(); isp1_v2++) {
               if (val2->sp1[isp1_v2] == val1->sp1[isp1_v1]) {
-                val1->sp1_pu[isp1_v1].conn.push_back(PortConn());
+                val1->sp1_pu[isp1_v1].conn.emplace_back(PortConn());
                 val1->sp1_pu[isp1_v1].conn.back().from_code = idx2;
                 val1->sp1_pu[isp1_v1].conn.back().from_port = -1;
               }

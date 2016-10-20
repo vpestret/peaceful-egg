@@ -89,13 +89,16 @@ public:
     s2r += ss.str() + "{";
     for (size_t idx = 0; idx < this->code_bits; idx++) {
       std::stringstream ss;
-      ss << sp1[idx] << (sp1_pu[idx].used != used_Unused ? "*" : "  ");
+      ss << to_string(sp1[idx], code_bits) << (sp1_pu[idx].used != used_Unused ? "*" : "  ");
       if (sp1_pu[idx].used != used_Unused) {
         ss << sp1_pu[idx].used;
       }
       ss << "(";
       for (const auto& co: sp1_pu[idx].conn) {
-        ss << co.from_code << ":" << co.from_port << " ";
+        if (co.from_port == (size_t)-1)
+          ss << co.from_code << " ";
+        else
+          ss << co.from_code << ":" << co.from_port << " ";
       }
       ss << ")";
       s2r += ss.str() + " ";
@@ -105,7 +108,8 @@ public:
   }
 };
 
-std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bits);
+std::vector<std::shared_ptr<Vertex> > generate_code_d2(size_t seed, size_t code_bits);
+std::vector<std::shared_ptr<Vertex> > generate_code_d3(size_t seed, size_t code_bits);
 
 enum XSecType{SP1xSP1, SP1xSP2};
 
