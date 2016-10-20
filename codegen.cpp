@@ -107,33 +107,59 @@ void Vertex::PrepareSheres() {
   }
 }
 
-void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code) {
+void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code, XSecType xsectype) {
   // Initialize spheres.
   for (auto iter1 = code.begin(); iter1 != code.end(); iter1++) {
     (*iter1)->PrepareSheres();
   }
   // Find intersections.
   for (auto iter1 = code.begin(); iter1 != code.end(); iter1++) { // sp 1
-    size_t idx2 = 0;
-    for (auto iter2 = code.begin(); iter2 != code.end(); iter2++, idx2++) { // sp 2
-      if (iter1 != iter2) {
-        auto val1 = *iter1;
-        auto val2 = *iter2;
-        std::string s1 = (std::string)(*val1);
-        std::string s2 = (std::string)(*val2);
-        // cycle over all sp1
-        for (size_t idx1 = 0; idx1 < val1->code_bits; idx1++) {
-          for (auto& ps2: val2->sp2) {
-            if (ps2.first == val1->sp1[idx1]) {
-              for(auto  port : ps2.second) {
-                val1->sp1_pu[idx1].conn.push_back(PortConn());
-                val1->sp1_pu[idx1].conn.back().from_code = idx2;
-                val1->sp1_pu[idx1].conn.back().from_port = port;
+    if (xsectype == SP1xSP2) {
+      size_t idx2 = 0;
+      for (auto iter2 = code.begin(); iter2 != code.end(); iter2++, idx2++) { // sp 2
+        if (iter1 != iter2) {
+          auto val1 = *iter1;
+          auto val2 = *iter2;
+          std::string s1 = (std::string)(*val1);
+          std::string s2 = (std::string)(*val2);
+          // cycle over all sp1
+          for (size_t isp1_v1 = 0; isp1_v1 < val1->sp1.size(); isp1_v1++) {
+            for (auto& psp2_v2: val2->sp2) {
+              if (psp2_v2.first == val1->sp1[isp1_v1]) {
+                for(auto  port : psp2_v2.second) {
+                  val1->sp1_pu[isp1_v1].conn.push_back(PortConn());
+                  val1->sp1_pu[isp1_v1].conn.back().from_code = idx2;
+                  val1->sp1_pu[isp1_v1].conn.back().from_port = port;
+                }
               }
             }
           }
         }
       }
+    } else if (xsectype == SP1xSP1) {
+      size_t idx2 = 0;
+      for (auto iter2 = code.begin(); iter2 != code.end(); iter2++, idx2++) {
+        if (iter1 != iter2) {
+          auto val1 = *iter1;
+          auto val2 = *iter2;
+          std::string s1 = (std::string)(*val1);
+          std::string s2 = (std::string)(*val2);
+          // cycle over all sp1
+          for (size_t isp1_v1 = 0; isp1_v1 < val1->sp1.size(); isp1_v1++) {
+            for (size_t isp1_v2 = 0; isp1_v2 < val2->sp1.size(); isp1_v2++) {
+              if (val2->sp1[isp1_v2] == val1->sp1[isp1_v1]) {
+                val1->sp1_pu[isp1_v1].conn.push_back(PortConn());
+                val1->sp1_pu[isp1_v1].conn.back().from_code = idx2;
+                val1->sp1_pu[isp1_v1].conn.back().from_port = -1;
+              }
+            }
+          }
+        }
+      }
+    } else {
+      std::ostringstream oss;
+      oss << xsectype;
+      throw std::runtime_error("unknown intersect type" + oss.str());
     }
   }
 }

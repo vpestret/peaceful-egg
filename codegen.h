@@ -107,7 +107,9 @@ public:
 
 std::vector<std::shared_ptr<Vertex> > generate_code(size_t seed, size_t code_bits);
 
-void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code);
+enum XSecType{SP1xSP1, SP1xSP2};
+
+void intersect_code_spheres(std::vector<std::shared_ptr<Vertex> >& code, XSecType xsectype);
 
 void clear_tag(std::vector<std::shared_ptr<Vertex> >& code, unsigned used_tag);
 

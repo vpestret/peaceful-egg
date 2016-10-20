@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
   }
   std::cout << std::endl;
 
-  intersect_code_spheres(gcode);
+  intersect_code_spheres(gcode, SP1xSP2);
 
   std::cout << "Close spheres\n";
   for (const auto& vrx : gcode) {
