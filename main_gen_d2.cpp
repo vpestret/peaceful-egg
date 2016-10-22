@@ -31,8 +31,8 @@ int main(int argc, char* argv[]) {
     std::cout << vrx->string_w_sp1() << "\n";
   }
   std::cout << std::endl;
-/*
-  auto levelsmap = generate_map_from_code(rnd_seed, gcode, num_levels2gen);
+
+  auto levelsmap = generate_map_from_code(rnd_seed, gcode, num_levels2gen, SP1xSP1);
 
   std::cout << "Layers built\n";
   size_t layer_idx = 0;
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
   std::ofstream ofs("labyrinth.v");
   generate_verilog_dnf(levelsmap, ofs);
   ofs.close();
-*/
+
   std::getchar();
 
   return 0;

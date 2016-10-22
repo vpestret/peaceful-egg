@@ -10,7 +10,8 @@ public:
   std::vector<std::vector<std::bitset<NMAX> > > levels;
 };
 
-LevelsMap generate_map_from_code(size_t seed, std::vector<std::shared_ptr<Vertex> >& code, unsigned n_levels);
+LevelsMap generate_map_from_code(size_t seed, std::vector<std::shared_ptr<Vertex> >& code, unsigned n_levels,
+                                 XSecType xsectype);
 
 void generate_verilog(const LevelsMap&, std::ostream&);
 

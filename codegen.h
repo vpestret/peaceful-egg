@@ -108,6 +108,10 @@ public:
   }
 };
 
+bool mark_sp_used(std::vector<std::shared_ptr<Vertex> >& code_vrx, const std::bitset<NMAX>& scode, unsigned used_tag);
+bool mark_link_used(std::vector<std::shared_ptr<Vertex> >& code_vrx, std::shared_ptr<Vertex> vrx,
+                    const std::bitset<NMAX>& scode, unsigned used_tag);
+
 std::vector<std::shared_ptr<Vertex> > generate_code_d2(size_t seed, size_t code_bits);
 std::vector<std::shared_ptr<Vertex> > generate_code_d3(size_t seed, size_t code_bits);
 

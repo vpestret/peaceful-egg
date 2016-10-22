@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
   }
   std::cout << std::endl;
 
-  auto levelsmap = generate_map_from_code(rnd_seed, gcode, num_levels2gen);
+  auto levelsmap = generate_map_from_code(rnd_seed, gcode, num_levels2gen, SP1xSP2);
 
   std::cout << "Layers built\n";
   size_t layer_idx = 0;

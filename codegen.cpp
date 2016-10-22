@@ -99,6 +99,53 @@ std::vector<std::shared_ptr<Vertex> > generate_code_d3(size_t seed, size_t code_
   return gcode;
 }
 
+bool mark_sp_used(std::vector<std::shared_ptr<Vertex> >& code_vrx, const std::bitset<NMAX>& scode, unsigned used_tag) {
+  // Search around code and sp1.
+  std::shared_ptr<Vertex> vrx_found;
+  for (auto& vrx : code_vrx) {
+    if (vrx->code == scode) {
+      vrx_found = vrx;
+      for (auto& pu : vrx->sp1_pu) {
+        pu.used = used_tag;
+      }
+    }
+  }
+  if (vrx_found) {
+    for (auto& vrx : code_vrx) {
+      if (vrx->code == vrx_found->code) continue;
+      // Find similar codes in sp1 of other vertexes.
+      for (size_t idx1 = 0; idx1 < vrx->sp1.size(); idx1++) {
+        for (size_t idx2 = 0; idx2 < vrx_found->sp1.size(); idx2++) {
+          if (vrx->sp1[idx1] == vrx_found->sp1[idx2]) {
+            vrx->sp1_pu[idx1].used = used_tag;
+            break;
+          }
+        }
+      }
+    }
+    return true;
+  }
+  // Also protect
+  return false;
+}
+
+bool mark_link_used(std::vector<std::shared_ptr<Vertex> >& code_vrx, std::shared_ptr<Vertex> vrx,
+                    const std::bitset<NMAX>& scode, unsigned used_tag) {
+  // Seek in sp1.
+  size_t idx_sp1 = 0;
+  for (auto& sp1_code : vrx->sp1) {
+    if (sp1_code == scode) {
+      // Found in sp1 -> mark all connected vertexes as used.
+      for (auto& co : vrx->sp1_pu[idx_sp1].conn) {
+        code_vrx[co.from_code]->used = used_tag;
+      }
+      return true;
+    }
+    idx_sp1++;
+  }
+  return false;
+}
+
 void Vertex::PrepareSheres() {
   for (size_t idx1 = 0; idx1 < this->code_bits; idx1++) {
     this->sp1.emplace_back(this->code ^ std::bitset<NMAX>(1 << idx1));

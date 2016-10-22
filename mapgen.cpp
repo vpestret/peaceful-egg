@@ -2,11 +2,79 @@
 
 const unsigned one_level_route_length = 3;
 
-std::vector<std::bitset<NMAX> > generate_path(std::default_random_engine gen,
-                                              std::vector<std::shared_ptr<Vertex> >& code,
-                                              size_t& curr_idx,
-                                              unsigned used_tag,
-                                              unsigned route_length) {
+std::vector<std::bitset<NMAX> > generate_path_d2(std::default_random_engine gen,
+                                                 std::vector<std::shared_ptr<Vertex> >& code,
+                                                 size_t& curr_idx,
+                                                 unsigned used_tag,
+                                                 unsigned route_length) {
+  std::vector<std::bitset<NMAX> > level;
+
+  level.push_back(code[curr_idx]->code);
+  code[curr_idx]->used = used_tag;
+
+  unsigned curr_length = 0;
+  while (curr_length < route_length) {
+    // Vertex based routing.
+    // Form index vector of not used vertexes reachable from current.
+    std::set<std::pair<size_t, size_t> > possibles;
+    for (size_t port_idx = 0; port_idx < code[curr_idx]->code_bits; port_idx++) {
+      if (code[curr_idx]->sp1_pu[port_idx].used != used_Unused) continue;
+      for (const auto& co : code[curr_idx]->sp1_pu[port_idx].conn) {
+        if (code[co.from_code]->used == used_Unused) {
+          possibles.insert(std::make_pair(port_idx, co.from_code));
+        }
+      }
+    }
+    if (possibles.size() == 0) {
+      std::cout << "No route found, exiting at length " << curr_length << "\n";
+      break;
+    }
+    // Print possibles.
+    std::cout << "For source vertex " << curr_idx << ":" << Vertex::to_string(code[curr_idx]->code, code[0]->code_bits) << " ";
+    std::cout << "Possible links vertexes: ";
+    for (const auto& pos : possibles) {
+      std::cout << Vertex::to_string(code[curr_idx]->sp1[pos.first], code[0]->code_bits) << "->"
+                << Vertex::to_string(code[pos.second]->code, code[0]->code_bits) << " ";
+    }
+    std::cout << "\n";
+    // Select target index.
+    std::uniform_int_distribution<size_t> tgtgen(0, possibles.size() - 1);
+    size_t tgt_idx = 0;//tgtgen(gen);
+    std::vector<std::pair<size_t, size_t> > tgt_idxes(possibles.begin(), possibles.end());
+    auto& tgt_pos = tgt_idxes[tgt_idx];
+    std::cout << "Target " << Vertex::to_string(code[curr_idx]->sp1[tgt_pos.first], code[0]->code_bits) << "->"
+              << Vertex::to_string(code[tgt_pos.second]->code, code[0]->code_bits) << "\n";
+    // Add current vertexes to path.
+    level.push_back(code[curr_idx]->sp1[tgt_pos.first]);
+    level.push_back(code[tgt_pos.second]->code);
+    // Debug dump examination.
+    std::cout << "Used spheres\n";
+    for (const auto& vrx : code) {
+      std::cout << vrx->string_w_sp1() << "\n";
+    }
+    std::cout << std::endl;
+    std::cout << "Path: ";
+    for (const auto& c2p : level) {
+      std::cout << Vertex::to_string(c2p, code[0]->code_bits) << " ";
+    }
+    std::cout << "\n";
+    std::getchar();
+    // Mark current as used and go to next.
+    mark_sp_used(code, code[curr_idx]->code, used_tag);
+    mark_link_used(code, code[curr_idx], code[curr_idx]->sp1[tgt_pos.first], used_tag);
+    curr_length++;
+    curr_idx = tgt_pos.second;
+  }
+  // Before return remove last vertex from level because it should be exit.
+  level.pop_back();
+  return level;
+}
+
+std::vector<std::bitset<NMAX> > generate_path_d3(std::default_random_engine gen,
+                                                 std::vector<std::shared_ptr<Vertex> >& code,
+                                                 size_t& curr_idx,
+                                                 unsigned used_tag,
+                                                 unsigned route_length) {
   std::vector<std::bitset<NMAX> > level;
 
   level.push_back(code[curr_idx]->code);
@@ -97,13 +165,13 @@ std::vector<std::bitset<NMAX> > generate_path(std::default_random_engine gen,
       break;
     }
   }
-
   // Before return remove last vertex from level because it should be exit.
   level.pop_back();
   return level;
 }
 
-LevelsMap generate_map_from_code(size_t seed, std::vector<std::shared_ptr<Vertex> >& code, unsigned n_levels) {
+LevelsMap generate_map_from_code(size_t seed, std::vector<std::shared_ptr<Vertex> >& code, unsigned n_levels,
+                                 XSecType xsectype) {
   LevelsMap map2ret;
   // Generating level 0.
   std::default_random_engine gen(seed);
@@ -114,7 +182,12 @@ LevelsMap generate_map_from_code(size_t seed, std::vector<std::shared_ptr<Vertex
   unsigned used_tag = 1;
   if (code[curr_idx]->used != used_Unused) throw std::runtime_error("intended start code is already used");
   map2ret.start_idx = curr_idx;
-  std::vector<std::bitset<NMAX> > level0 = generate_path(gen, code, curr_idx, used_tag, one_level_route_length);
+  std::vector<std::bitset<NMAX> > level0;
+  if (xsectype == SP1xSP2) {
+    level0 = generate_path_d3(gen, code, curr_idx, used_tag, one_level_route_length);
+  } else if (xsectype == SP1xSP1) {
+    level0 = generate_path_d2(gen, code, curr_idx, used_tag, one_level_route_length);
+  }
   map2ret.levels.push_back(level0);
   unsigned prev_used_tag = used_tag;
   used_tag = 3 - used_tag;
@@ -122,7 +195,12 @@ LevelsMap generate_map_from_code(size_t seed, std::vector<std::shared_ptr<Vertex
     // Remove previously used tag.
     clear_tag(code, used_tag);
     // Generate new level with new tag.
-    std::vector<std::bitset<NMAX> > level = generate_path(gen, code, curr_idx, used_tag, one_level_route_length);
+    std::vector<std::bitset<NMAX> > level;
+    if (xsectype == SP1xSP2) {
+      level = generate_path_d3(gen, code, curr_idx, used_tag, one_level_route_length);
+    } else if (xsectype == SP1xSP1) {
+      level = generate_path_d2(gen, code, curr_idx, used_tag, one_level_route_length);
+    }
     if (level.empty()) break;
     map2ret.levels.push_back(level);
     prev_used_tag = used_tag;
