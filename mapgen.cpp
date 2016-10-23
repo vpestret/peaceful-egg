@@ -217,7 +217,7 @@ void generate_verilog(const LevelsMap& lm, std::ostream& ost) {
          "  Q   //  output\n"
          ");\n";
 
-  ost << "  input [" << lm.levels[0][0].size() - 1 << ":0] A;\n";
+  ost << "  input [" << lm.code_bits - 1 << ":0] A;\n";
   ost << "  output [" << lm.levels.size() - 1 << ":0] Q;\n";
 
   ost << "  wire [" << lm.levels.size() -1 << ":0] Q;\n";
@@ -265,7 +265,7 @@ void generate_verilog_dnf(const LevelsMap& lm, std::ostream& ost) {
   }
 
   ost << "module labyrinth (\n";
-  for (size_t in_idx = 0; in_idx < lm.levels[0][0].size(); in_idx++) {
+  for (size_t in_idx = 0; in_idx < lm.code_bits; in_idx++) {
     ost << "  A" << in_idx << ",  //  binary input\n";
   }
   for (size_t out_idx = 0; out_idx < lm.levels.size(); out_idx++) {
@@ -277,7 +277,7 @@ void generate_verilog_dnf(const LevelsMap& lm, std::ostream& ost) {
   }
   ost << ");\n";
 
-  for (size_t in_idx = 0; in_idx < lm.levels[0][0].size(); in_idx++) {
+  for (size_t in_idx = 0; in_idx < lm.code_bits; in_idx++) {
     ost << "  input A" << in_idx << ";\n";
   }
   for (size_t out_idx = 0; out_idx < lm.levels.size(); out_idx++) {
